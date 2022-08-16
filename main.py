@@ -16,8 +16,13 @@ counter = 0
 for subsystem in subsystem_ds:
 
     # get all includes for each file
-    list_of_includes = walker_str.extract_includes(subsystem[1], subsystem_files[counter])
-    counter += 1
+    try:
+        print("Generating:", subsystem[0] + "_" + subsystem[1])
+        list_of_includes = walker_str.extract_includes(subsystem[1], subsystem_files[counter])
+        counter += 1
+    except UnicodeDecodeError:
+        counter += 1
+        print("UnicodeDecodeError")
 
     # create an include graph
     graph = walker_graph.create_graph(list_of_includes)
@@ -36,6 +41,7 @@ for subsystem in subsystem_ds:
     vector = walker_str.get_vector_from_graph(ds)
     result_csv.append(subsystem[0] + ";" + subsystem[1] + ";" + str(vector))
     walker_core.save_vector_as_csv(result_csv, subsystem[0] + "_" + subsystem[1].lower())
+    result_csv = ["engine;subsystem;vector"]
 
     # generate visual representation (image) of graph
     #walker_graph.draw_graph(graph, subsystem[0] + "_" + subsystem[1].lower())
