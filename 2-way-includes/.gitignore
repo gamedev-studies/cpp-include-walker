@@ -1,0 +1,10 @@
+__pycache__
+.ipynb_checkpoints
+tests
+vectors
+results
+
+# files which are regenerated on every run
+edge_count.csv
+edges_ordered.csv
+subsystem.dot
