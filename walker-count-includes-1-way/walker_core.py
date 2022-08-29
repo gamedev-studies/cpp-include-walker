@@ -10,7 +10,9 @@ def load_subsystems_file(path, separator, engine="", debug=False):
         subsystem_filenames = get_subsystem_filenames(sub[2], sub[3].split(","), False)
         results.append(subsystem_filenames)
         if debug:
+            print("==========")
             print(subsystem_filenames)
+            print("==========")
     return ds_subs.values, results
 
 def do_walk(path):
@@ -51,14 +53,21 @@ def is_cpp_file(filename, debug=False):
 def get_cpp_extensions():
     return [".cpp", ".h"]
 
-def get_strings_to_remove(prefix=""):
-    return ["#include", "\"", "../", (prefix + "/"), "<", ">"]
+def get_strings_to_remove(prefix=None):
+    base_list = ["#include", "\"", "../", "<", ">"]
+    if prefix:
+        base_list.append(prefix + "/")
+    return base_list
 
 def save_vector_as_csv(vector, name):
     if name:
         f = open("./vectors/" + name + ".csv", "w")
-        for item in vector:
-            f.write(item + "\n")
+        if "dict" in str(type(vector)):
+            for key, value in vector.items():
+                f.write(value + "," + key + "\n")
+        else:
+            for item in vector:
+                f.write(item + "\n")
         f.close()
     else:
         print("No filename informed.")

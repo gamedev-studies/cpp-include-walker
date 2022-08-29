@@ -1,7 +1,8 @@
+import re
 import numpy as np
 import walker_core
 
-def extract_includes(prefix, subsystem_files):
+def extract_includes(subsystem_files, prefix=None):
     include_list = []
     parts_to_remove = walker_core.get_strings_to_remove(prefix)
     for subsystem_file in subsystem_files:
@@ -12,6 +13,7 @@ def extract_includes(prefix, subsystem_files):
                     clean_name = line.strip()
                     for part in parts_to_remove:
                         clean_name = clean_name.replace(part, "")
+                    clean_name = remove_comments(clean_name)
                     include_list.append((subsystem_file, clean_name))
     return include_list
 
@@ -44,3 +46,6 @@ def get_vector_from_graph(ds):
         else:
             result += "," + str_to_add
     return result
+
+def remove_comments(line):
+    return re.sub(r'//(.*)', '', line).strip()

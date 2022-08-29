@@ -23,7 +23,7 @@ def get_unique_node_list(graph):
         result.append(a.strip())
     return result
 
-def build_ds_from_graph(graph, unique_names, debug=False):
+def build_ds_from_graph(graph, unique_names, order_by_count = False, debug=False):
     node_main = []
     node_include = []
     node_include_count = []
@@ -79,7 +79,10 @@ def build_ds_from_graph(graph, unique_names, debug=False):
     if debug:
         print("After false empty removal:", len(full_ds))
     
-    return full_ds.sort_values(['total_includes', 'node_filename', 'include_filename'], ascending = [False, True, True])
+    if order_by_count:
+        return full_ds.sort_values(['total_includes', 'node_filename', 'include_filename'], ascending = [False, True, True])
+    else:
+        return full_ds
 
 def remove_false_empty(ds, debug=False):
     ds2 = ds
