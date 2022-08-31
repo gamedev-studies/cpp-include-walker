@@ -12,7 +12,7 @@ def generate_unique_node_ids(node_list, id_type):
     name_map = {}
     all_node_names = np.array([])
 
-    if id_type == "string":
+    if id_type == "for_yann" or id_type == "for_consensus":
         ascii_begin = 65
         ascii_end = 91
         ascii_limit = ascii_end - ascii_begin
@@ -26,7 +26,7 @@ def generate_unique_node_ids(node_list, id_type):
     unique_names = np.unique(all_node_names)
 
     counter = 0
-    if id_type == "string":
+    if id_type == "for_yann" or id_type == "for_consensus":
         cycle = 1
         for name in unique_names:
             name_map[name] = chr(alphabet[counter]) + str(cycle)
@@ -44,11 +44,19 @@ def generate_unique_node_ids(node_list, id_type):
 
     return name_map
 
+def to_set(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
 
 def concat_vector_items(id_type, ordered_dot_ids):
-    result_vector = ""
-    first_item = True
-    if id_type == "string":
+    result_vector = np.array([])
+    if id_type == "for_consensus":
+        for file_id in ordered_dot_ids:
+            result_vector = np.append(result_vector, file_id[0])
+        result_vector = to_set(result_vector)
+        result_vector = ",".join(result_vector)
+    elif id_type == "for_yann":
         for file_id in ordered_dot_ids:
             if first_item:
                 result_vector += "inc".join(file_id)
@@ -77,11 +85,12 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
     first_query_item = True
     for subsystem_folder in subsystem_folders:
         if first_query_item:
-            query = "edge.str.contains('" + subsystem_folder + "')"
+            query += "edge.str.contains('" + subsystem_folder + "')"
             first_query_item = False
         else:
-            query = "| edge.str.contains('" + subsystem_folder + "')"
+            query += " | edge.str.contains('" + subsystem_folder + "')"
     ds = ds.sort_values(by="sum", ascending=False)
+    #print(query)
     ds = ds.query(query)
     ds.to_csv("edges_ordered.csv")
 
@@ -109,7 +118,7 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
             keys = list(name_map.values())
             if id_type == "number":
                 include = str(int(keys[len(keys) - 1]) + 1)
-            elif id_type == "string":
+            elif id_type == "for_yann" or id_type == "for_consensus":
                 include = "null"
             print("file not in the subsystem folder: ", line[1])
         ordered_dot_ids.append([node, include])
@@ -131,6 +140,6 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
 print("start")
 if sys.argv[1] and sys.argv[2]:
     print(sys.argv[1], sys.argv[2])
-    gen_vector("string", True, sys.argv[1], sys.argv[2])
+    gen_vector("for_consensus", True, sys.argv[1], sys.argv[2])
 else:
     print("No engine/subsystem name informed")
