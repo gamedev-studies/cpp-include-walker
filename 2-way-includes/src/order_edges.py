@@ -1,9 +1,12 @@
+import sys
 import pandas as pd
 import numpy as np
 
+
 def get_vector_format(line):
-    result = line.strip().replace("\"", "").split("->")
-    return list(map(lambda item: item.strip(), result)) 
+    result = line.strip().replace('"', "").split("->")
+    return list(map(lambda item: item.strip(), result))
+
 
 def generate_unique_node_ids(node_list, id_type):
     name_map = {}
@@ -17,7 +20,7 @@ def generate_unique_node_ids(node_list, id_type):
     elif id_type == "number":
         starting_number = 1
 
-    #get unique names
+    # get unique names
     for node in node_list:
         all_node_names = np.append(all_node_names, str(node).strip())
     unique_names = np.unique(all_node_names)
@@ -41,6 +44,7 @@ def generate_unique_node_ids(node_list, id_type):
 
     return name_map
 
+
 def concat_vector_items(id_type, ordered_dot_ids):
     result_vector = ""
     first_item = True
@@ -61,26 +65,40 @@ def concat_vector_items(id_type, ordered_dot_ids):
                 result_vector += ",(" + pair + ",1)"
     return result_vector
 
-def gen_vector(id_type="string", save_to_file=True):
+
+def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsystem_folder_string=""):
+    # prepare to check subsystem folders
+    subsystem_folders = subsystem_folder_string.split(",")
+    
     # order and save
-    ds = pd.read_csv('edge_count.csv')
-    ds = ds.sort_values(by="sum", ascending=False)
+    ds = pd.read_csv("edge_count.csv")
     ds = ds[(ds.includes != "includes")]
-    ds.to_csv('edges_ordered.csv')
+    query = ""
+    first_query_item = True
+    for subsystem_folder in subsystem_folders:
+        if first_query_item:
+            query = "edge.str.contains('" + subsystem_folder + "')"
+            first_query_item = False
+        else:
+            query = "| edge.str.contains('" + subsystem_folder + "')"
+    ds = ds.sort_values(by="sum", ascending=False)
+    ds = ds.query(query)
+    ds.to_csv("edges_ordered.csv")
 
     # use the ordered ds
     dot_file = open("subsystem.dot", "r")
     dot_file_lines = []
     for line in dot_file:
         dot_file_lines.append(line)
-    ordered_file_names = ds['edge'].values #[0:2]
+    ordered_file_names = ds["edge"].values  # [0:2]
     name_map = generate_unique_node_ids(ordered_file_names, id_type)
     ordered_dot = []
     for file_name in ordered_file_names:
         for line in dot_file_lines:
-            if file_name + "\" ->" in line:
+            if file_name + '" ->' in line:
                 ordered_dot.append(get_vector_format(line))
     ordered_dot_ids = []
+    print(ordered_dot)
     for line in ordered_dot:
         node = ""
         include = ""
@@ -88,7 +106,7 @@ def gen_vector(id_type="string", save_to_file=True):
             node = name_map[line[0]]
             include = name_map[line[1]]
         except KeyError:
-            #print("err")
+            print("err", node)
             pass
         ordered_dot_ids.append([node, include])
 
@@ -98,12 +116,17 @@ def gen_vector(id_type="string", save_to_file=True):
         print(result_vector)
         print(name_map)
     else:
-        vector_file = open("vector.csv", "w")
+        vector_file = open("./results/" + engine_id + "_vector.csv", "w")
         vector_file.write(result_vector)
         vector_file.close()
 
-        map_file = open("vector_map.json", "w")
-        map_file.write(str(name_map))
+        map_file = open("./results/" + engine_id + "_vector_map.json", "w")
+        map_file.write(str(name_map).replace("'", '"'))
         map_file.close()
 
-gen_vector("number")
+print("start")
+if sys.argv[1] and sys.argv[2]:
+    print(sys.argv[1], sys.argv[2])
+    gen_vector("number", True, sys.argv[1], sys.argv[2])
+else:
+    print("No engine/subsystem name informed")

@@ -141,7 +141,7 @@ sub include_search {
 	foreach $item (@includepaths)
 	{
 	  $_ = tidypath($item . "/" . $inc);
-	  warn "include_search trying $_" if $debug;
+	  warn "include_search_user trying $_" if $debug;
 	  return $_ if (-e "$_");
 	}
 
