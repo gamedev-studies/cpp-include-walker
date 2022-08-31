@@ -106,8 +106,9 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
             node = name_map[line[0]]
             include = name_map[line[1]]
         except KeyError:
-            print("err", node)
-            pass
+            keys = list(name_map.values())
+            include = str(int(keys[len(keys) - 1]) + 1)
+            print("file not in the subsystem folder: ", line[1])
         ordered_dot_ids.append([node, include])
 
     result_vector = concat_vector_items(id_type, ordered_dot_ids)
