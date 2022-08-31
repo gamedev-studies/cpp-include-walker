@@ -107,7 +107,10 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
             include = name_map[line[1]]
         except KeyError:
             keys = list(name_map.values())
-            include = str(int(keys[len(keys) - 1]) + 1)
+            if id_type == "number":
+                include = str(int(keys[len(keys) - 1]) + 1)
+            elif id_type == "string":
+                include = "null"
             print("file not in the subsystem folder: ", line[1])
         ordered_dot_ids.append([node, include])
 
@@ -128,6 +131,6 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
 print("start")
 if sys.argv[1] and sys.argv[2]:
     print(sys.argv[1], sys.argv[2])
-    gen_vector("number", True, sys.argv[1], sys.argv[2])
+    gen_vector("string", True, sys.argv[1], sys.argv[2])
 else:
     print("No engine/subsystem name informed")
