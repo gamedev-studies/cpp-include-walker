@@ -50,13 +50,15 @@ def to_set(seq):
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 def concat_vector_items(id_type, ordered_dot_ids):
-    result_vector = np.array([])
+    first_item = True
     if id_type == "for_consensus":
+        result_vector = np.array([])
         for file_id in ordered_dot_ids:
             result_vector = np.append(result_vector, file_id[0])
         result_vector = to_set(result_vector)
         result_vector = ",".join(result_vector)
     elif id_type == "for_yann":
+        result_vector = ""
         for file_id in ordered_dot_ids:
             if first_item:
                 result_vector += "inc".join(file_id)
@@ -64,6 +66,7 @@ def concat_vector_items(id_type, ordered_dot_ids):
             else:
                 result_vector += "," + ("inc".join(file_id))
     elif id_type == "number":
+        result_vector = ""
         for file_id in ordered_dot_ids:
             pair = ",".join(file_id)
             if first_item:
@@ -74,11 +77,11 @@ def concat_vector_items(id_type, ordered_dot_ids):
     return result_vector
 
 
-def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsystem_folder_string=""):
+def gen_vector(id_type="number", save_to_file=True, engine_id="engine", subsystem_folder_string=""):
     # prepare to check subsystem folders
     subsystem_folders = subsystem_folder_string.split(",")
     
-    # order and save
+    # order edges by sum of includes and save
     ds = pd.read_csv("edge_count.csv")
     ds = ds[(ds.includes != "includes")]
     query = ""
@@ -90,39 +93,50 @@ def gen_vector(id_type="string", save_to_file=True, engine_id="engine", subsyste
         else:
             query += " | edge.str.contains('" + subsystem_folder + "')"
     ds = ds.sort_values(by="sum", ascending=False)
-    #print(query)
     ds = ds.query(query)
     ds.to_csv("edges_ordered.csv")
 
-    # use the ordered ds
+    # read the dot file and save lines to array
     dot_file = open("subsystem.dot", "r")
     dot_file_lines = []
     for line in dot_file:
         dot_file_lines.append(line)
-    ordered_file_names = ds["edge"].values  # [0:2]
-    name_map = generate_unique_node_ids(ordered_file_names, id_type)
-    ordered_dot = []
-    for file_name in ordered_file_names:
-        for line in dot_file_lines:
-            if file_name + '" ->' in line:
-                ordered_dot.append(get_vector_format(line))
-    ordered_dot_ids = []
-    print(ordered_dot)
-    for line in ordered_dot:
-        node = ""
-        include = ""
-        try:
-            node = name_map[line[0]]
-            include = name_map[line[1]]
-        except KeyError:
-            keys = list(name_map.values())
-            if id_type == "number":
-                include = str(int(keys[len(keys) - 1]) + 1)
-            elif id_type == "for_yann" or id_type == "for_consensus":
-                include = "null"
-            print("file not in the subsystem folder: ", line[1])
-        ordered_dot_ids.append([node, include])
 
+    # generate unique ids for files
+    ordered_dot = []
+    ordered_dot_ids = []
+    ordered_file_names = ds["edge"].values 
+    name_map = generate_unique_node_ids(ordered_file_names, id_type)
+
+    if id_type == "number" or id_type == "for_yann":
+        for file_name in ordered_file_names:
+            for line in dot_file_lines:
+                if file_name + '" ->' in line:
+                    ordered_dot.append(get_vector_format(line))
+        for line in ordered_dot:
+            node = ""
+            include = ""
+            # match names in the .dot with the ids
+            try:
+                node = name_map[line[0]]
+                include = name_map[line[1]]
+            except KeyError:
+                keys = list(name_map.values())
+                if id_type == "number":
+                    include = str(int(keys[len(keys) - 1]) + 1)
+                elif id_type == "for_yann":
+                    include = "null"
+                print("child/parent of parent file not in the subsystem folder: ", line[1])
+            ordered_dot_ids.append([node, include])
+    elif id_type == "for_consensus":
+        for line in ordered_file_names:
+            try:
+                print(line)
+                node = name_map[line]
+            except KeyError:
+                node = "null"
+                print("warning! parent file not in the subsystem folder: ", line[0])
+            ordered_dot_ids.append([node, "null"])
     result_vector = concat_vector_items(id_type, ordered_dot_ids)
 
     if not save_to_file:
