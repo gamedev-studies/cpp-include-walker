@@ -1,12 +1,11 @@
+import os
 import sys
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 
 def get_vector_format(line):
     result = line.strip().replace('"', "").split("->")
     return list(map(lambda item: item.strip(), result))
-
 
 def generate_unique_node_ids(node_list, id_type):
     name_map = {}
@@ -76,28 +75,31 @@ def concat_vector_items(id_type, ordered_dot_ids):
                 result_vector += ",(" + pair + ",1)"
     return result_vector
 
-
-def gen_vector(id_type="number", save_to_file=True, engine_id="engine", subsystem_folder_string=""):
+def gen_vector(id_type="number", save_to_file=True, engine="engine", subsystem="subsystem", subsystem_folder_string=""):
     # prepare to check subsystem folders
     subsystem_folders = subsystem_folder_string.split(",")
     
     # order edges by sum of includes and save
-    ds = pd.read_csv("edge_count.csv")
+    engine = sys.argv[1]
+    path = os.getcwd() + "/graphs/" + engine + "_"
+    ds = pd.read_csv(path + "edge_count.csv")
     ds = ds[(ds.includes != "includes")]
     query = ""
     first_query_item = True
     for subsystem_folder in subsystem_folders:
         if first_query_item:
-            query += "edge.str.contains('" + subsystem_folder + "')"
+            # note: must have the slash in the end to guarantee it is reading the right folder
+            # ex: contains /audio may include /audioblabla and not just /audio/
+            query += "edge.str.contains('" + subsystem_folder + "/')"
             first_query_item = False
         else:
-            query += " | edge.str.contains('" + subsystem_folder + "')"
+            query += " | edge.str.contains('" + subsystem_folder + "/')"
     ds = ds.sort_values(by="sum", ascending=False)
     ds = ds.query(query)
-    ds.to_csv("edges_ordered.csv")
+    ds.to_csv("./results/" + engine + "_" + subsystem + "/" + engine + "_" + subsystem + "_edges_ordered.csv")
 
     # read the dot file and save lines to array
-    dot_file = open("subsystem.dot", "r")
+    dot_file = open(path + "subsystem.dot", "r")
     dot_file_lines = []
     for line in dot_file:
         dot_file_lines.append(line)
@@ -143,17 +145,19 @@ def gen_vector(id_type="number", save_to_file=True, engine_id="engine", subsyste
         print(result_vector)
         print(name_map)
     else:
-        vector_file = open("./results/" + engine_id + "_vector.csv", "w")
+        vector_file = open("./results/" + engine + "_" + subsystem + "/" + engine + "_" + subsystem + "_vector.csv", "w")
+        if id_type == "for_consensus":
+            result_vector = "[[" + result_vector.replace(",", "],[") + "]]"
         vector_file.write(result_vector)
         vector_file.close()
 
-        map_file = open("./results/" + engine_id + "_vector_map.json", "w")
+        map_file = open("./results/" + engine + "_" + subsystem + "/" + engine + "_" + subsystem + "_vector_map.json", "w")
         map_file.write(str(name_map).replace("'", '"'))
         map_file.close()
 
 print("start")
 if sys.argv[1] and sys.argv[2]:
     print(sys.argv[1], sys.argv[2])
-    gen_vector("for_consensus", True, sys.argv[1], sys.argv[2])
+    gen_vector("for_consensus", True, sys.argv[1], sys.argv[2], sys.argv[3])
 else:
     print("No engine/subsystem name informed")
