@@ -29,3 +29,7 @@ then
 else
    echo "INFO: done with newly generated include graphs"
 fi
+
+echo "INFO: computing metrics for all engines and subsystems"
+python3 src/compute_metric.py
+echo "INFO: done computing metrics"
