@@ -5,5 +5,5 @@ BEG_G {
     printf("edge,includes,includedby,sum\n")
 }
 N {
-    printf("%s,%d,%d,%d\n", $.name, $.indegree, $.outdegree, $.indegree + $.outdegree);
+    printf("%s,%d,%d,%d\n", $.name, $.outdegree, $.indegree, $.indegree + $.outdegree);
 }
