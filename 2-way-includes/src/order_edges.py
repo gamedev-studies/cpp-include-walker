@@ -3,6 +3,8 @@ import sys
 import numpy as np
 import pandas as pd
 
+debug = False
+
 def get_vector_format(line):
     result = line.strip().replace('"', "").split("->")
     return list(map(lambda item: item.strip(), result))
@@ -82,7 +84,16 @@ def gen_vector(id_type="number", save_to_file=True, engine="engine", subsystem="
     # order edges by sum of includes and save
     engine = sys.argv[1]
     path = os.getcwd() + "/graphs/" + engine + "_"
-    ds = pd.read_csv(path + "edge_count.csv")
+    ds = []
+    try:
+        ds = pd.read_csv(path + "edge_count.csv")
+    except Exception as e:
+        print("Error when reading edge count file:", e)
+
+    if (len(ds) == 0):
+        print("Edge count file is empty or malformed, cannot proceed")
+        exit()
+
     ds = ds[(ds.includes != "includes")]
     query = ""
     first_query_item = True
@@ -133,7 +144,8 @@ def gen_vector(id_type="number", save_to_file=True, engine="engine", subsystem="
     elif id_type == "for_consensus":
         for line in ordered_file_names:
             try:
-                print(line)
+                if debug:
+                    print(line)
                 node = name_map[line]
             except KeyError:
                 node = "null"
@@ -142,8 +154,9 @@ def gen_vector(id_type="number", save_to_file=True, engine="engine", subsystem="
     result_vector = concat_vector_items(id_type, ordered_dot_ids)
 
     if not save_to_file:
-        print(result_vector)
-        print(name_map)
+        if debug:
+            print(result_vector)
+            print(name_map)
     else:
         vector_file = open("./results/" + engine + "_" + subsystem + "/" + engine + "_" + subsystem + "_vector.csv", "w")
         if id_type == "for_consensus":
