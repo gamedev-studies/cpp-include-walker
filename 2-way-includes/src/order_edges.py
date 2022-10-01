@@ -91,7 +91,7 @@ def gen_vector(id_type="number", save_to_file=True, engine="engine", subsystem="
         print("Error when reading edge count file:", e)
 
     if (len(ds) == 0):
-        print("Edge count file is empty or malformed, cannot proceed")
+        print("ATTENTION! Edge count file is empty or malformed, cannot proceed")
         exit()
 
     ds = ds[(ds.includes != "includes")]
