@@ -15,7 +15,7 @@ if test -f "$ENGINE_INCLUDE_GRAPH" && test -f "$EDGE_COUNT"; then
 else
    CACHE_USED=0
    echo "INFO: include graphs not found in cache, generating it..."
-   perl src/cinclude2dot.pl --src=$1 --include=$2 --paths --quotetypes quote >> graphs/$3_subsystem.dot
+   perl src/cinclude2dot.pl --src=$1 --include=$2 --paths >> graphs/$3_subsystem.dot
    gvpr -f src/count_edges.gvpr graphs/$3_subsystem.dot >> graphs/$3_edge_count.csv
    python3 src/remove_linebreaks.py $3 $4
 fi

@@ -2,8 +2,9 @@ import os
 import sys
 import pandas as pd
 
-engines = ['cocos', 'godot', 'o3de', 'unreal']
-subsystems = ['aud','cor','edi','gmp','hid','llr','omp','phy','pla','res','deb','fes','sdk','sgc','ska','vfx']
+engines = ['cocos2d-x','FlaxEngine','gameplay','godot','o3de','olcPixelGameEngine','panda3d','Piccolo','UnrealEngine','Urho3D']
+#engines = ['Piccolo']
+subsystems = ['AUD','COR','EDI','GMP','HID','LLR','OMP','PHY','PLA','RES','DEB','FES','SDK','SGC','SKA','VFX']
 all_eng_subs = pd.DataFrame()
 all_eng_subs['header'] = subsystems
 
@@ -13,9 +14,13 @@ def compute_metric():
         for subsystem in subsystems:
             path = os.getcwd() + "/results"
             eng_sub_name = engine + '_' + subsystem
+            #print("=====")
+            #print(subsystem)
             if os.path.exists(path + '/' + eng_sub_name + '/' + eng_sub_name + '_edges_ordered.csv'):
                 ds = pd.read_csv(path + '/' + eng_sub_name + '/' + eng_sub_name + '_edges_ordered.csv', sep=",")
                 aux.append(ds['sum'].sum())
+                #print(ds['sum'].sum())
+                #print("=====")
             else:
                 aux.append(0)
         all_eng_subs[engine] = aux

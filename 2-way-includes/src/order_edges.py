@@ -99,9 +99,8 @@ def gen_vector(id_type="number", save_to_file=True, engine="engine", subsystem="
     first_query_item = True
     for subsystem_folder in subsystem_folders:
         if first_query_item:
-            # note: must have the slash in the end to guarantee it is reading the right folder
-            # ex: contains /audio may include /audioblabla and not just /audio/
-            query += "edge.str.contains('" + subsystem_folder + "/')"
+            # check if path contains file/folder we passed as CLI param
+            query += "edge.str.contains('" + subsystem_folder + "')"
             first_query_item = False
         else:
             query += " | edge.str.contains('" + subsystem_folder + "/')"
